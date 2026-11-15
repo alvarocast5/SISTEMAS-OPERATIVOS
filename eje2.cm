@@ -1,0 +1,60 @@
+#include "gdefs.cm"
+
+const
+    int PARED_IZQ = 4;    int PARED_DER = 5;
+    int ICONO_PRODUCTOR = 101;  int ICONO_PAQUETE = 102;  int ICONO_CONSUMIDOR = 103;
+    int TOTAL_PAQUETES = 8;
+
+semaphore huecos_libres = 3;
+semaphore paquetes_listos = 0;
+semaphore acceso = 1;
+
+void productor() {
+	int n;
+	n = 1;
+	while (n <= TOTAL_PAQUETES) {
+		cout << "Productor: fabrico paquete " << n << endl;
+		wait(huecos_libres);
+		wait(acceso);
+		moveby(ICONO_PRODUCTOR, 80, 0);
+		moveby(ICONO_PAQUETE, 220, 0);
+		cout << "Productor: dejo paquete " << n << endl;
+		moveby(ICONO_PAQUETE, -220, 0);
+		moveby(ICONO_PRODUCTOR, -80, 0);
+		signal(acceso);
+		signal(paquetes_listos);
+		n = n + 1;
+	}
+}
+
+void consumidor() {
+	int n;
+	n = 1;
+	while (n <= TOTAL_PAQUETES) {
+		wait(paquetes_listos);
+		wait(acceso);
+		cout << "Consumidor: busco paquete " << n << endl;
+		moveby(ICONO_CONSUMIDOR, -80, 0);
+		moveby(ICONO_PAQUETE, 220, 0);
+		cout << "Consumidor: cojo paquete " << n << endl;
+		moveby(ICONO_PAQUETE, -220, 0);
+		moveby(ICONO_CONSUMIDOR, 80, 0);
+		signal(acceso);
+		signal(huecos_libres);
+		n = n + 1;
+	}
+}
+
+void main() {
+	create(PARED_IZQ, RECTANGLE, BLACK, 200, 100, 5, 300);
+	create(PARED_DER, RECTANGLE, BLACK, 400, 100, 5, 300);
+
+	create(ICONO_PRODUCTOR, ANIMAGE, 0, 30, 150, -1, -1);
+	create(ICONO_CONSUMIDOR, ANIMAGE, 0, 480, 150, -1, -1);
+	create(ICONO_PAQUETE, ANIMAGE, 0, 50, 270, -1, -1);
+
+	cobegin {
+		productor();
+		consumidor();
+	}
+}
